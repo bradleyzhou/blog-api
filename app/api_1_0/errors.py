@@ -29,6 +29,37 @@ def not_found(message):
     return response
 
 
+def server_error(message):
+    response = jsonify({'error': 'internal error', 'message': message})
+    response.status_code = 500
+    return response
+
+
+@api.app_errorhandler(400)
+def e400(e):
+    return bad_request(str(e))
+
+
+@api.app_errorhandler(401)
+def e401(e):
+    return unauthorized(str(e))
+
+
+@api.app_errorhandler(403)
+def e403(e):
+    return forbidden(str(e))
+
+
+@api.app_errorhandler(404)
+def e404(e):
+    return not_found(str(e))
+
+
+@api.app_errorhandler(500)
+def e500(e):
+    return server_error(str(e))
+
+
 @api.errorhandler(ValidationError)
 def validation_error(e):
     return bad_request(e.args[0])
