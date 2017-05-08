@@ -1,5 +1,5 @@
 # bradleyzhou.com
-Source code of the website www.bradleyzhou.com
+Source code of the website blog.bradleyzhou.com
 
 ## API Design Draft
 * Base URL: https://blog.bradleyzhou.com/api/v1.0
