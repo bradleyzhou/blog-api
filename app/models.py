@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 
 from . import db
+from .exceptions import ValidationError
 
 
 class User(db.Model):
@@ -97,8 +98,8 @@ class Post(db.Model):
     def from_json(json_post):
         title = json_post.get('title')
         if title is None or title == '':
-            raise ValueError('post does not have a title')
+            raise ValidationError('post does not have a title')
         body = json_post.get('body')
         if body is None or body == '':
-            raise ValueError('post does not have a body')
+            raise ValidationError('post does not have a body')
         return Post(title=title, body=body)

@@ -5,6 +5,7 @@ from flask import current_app
 
 from ..models import Post
 from . import api
+from ..exceptions import NotFoundError
 
 
 @api.route('/posts/')
@@ -30,5 +31,7 @@ def get_posts():
 
 @api.route('/posts/<int:id>')
 def get_post(id):
-    post = Post.query.get_or_404(id)
+    post = Post.query.get(id)
+    if not post:
+        raise NotFoundError('post not found')
     return jsonify(post.to_json())

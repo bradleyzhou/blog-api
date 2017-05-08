@@ -5,17 +5,22 @@ from flask import url_for
 
 from . import api
 from ..models import User, Post
+from ..exceptions import NotFoundError
 
 
 @api.route('/users/<int:id>')
 def get_user(id):
-    user = User.query.get_or_404(id)
+    user = User.query.get(id)
+    if not user:
+        raise NotFoundError('user not found')
     return jsonify(user.to_json())
 
 
 @api.route('/users/<int:id>/posts')
 def get_user_posts(id):
-    user = User.query.get_or_404(id)
+    user = User.query.get(id)
+    if not user:
+        raise NotFoundError('user not found')
     page = request.args.get('page', 1, type=int)
     pagination = user.posts.order_by(Post.timestamp.desc()).paginate(
         page, per_page=current_app.config['POSTS_PER_PAGE'],
