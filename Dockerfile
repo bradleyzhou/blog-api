@@ -1,8 +1,10 @@
 FROM pun
 
 WORKDIR /app
-ADD . /app
+ADD requirements.txt /app
 RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+
+ADD . /app
 
 EXPOSE 80
 # ENV FLASK_APP=manage.py
