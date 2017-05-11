@@ -4,6 +4,7 @@ from flask import url_for
 from flask import current_app
 
 from ..models import Post
+from .. import db
 from . import api
 from ..exceptions import NotFoundError
 
@@ -34,4 +35,24 @@ def get_post(id):
     post = Post.query.get(id)
     if post is None:
         raise NotFoundError('post not found')
+    return jsonify(post.to_json())
+
+
+@api.route('/posts/', methods=['POST'])
+def new_post():
+    post = Post.from_json(request.json)
+    # post.author = g.current_user
+    db.session.add(post)
+    db.session.commit()
+    return jsonify(post.to_json()), 201, \
+        {'Location': url_for('api.get_post', id=post.id, _external=True)}
+
+
+@api.route('/posts/<int:id>', methods=['PUT'])
+def edit_post(id):
+    post = Post.query.get(id)
+    if post is None:
+        raise NotFoundError('post not found')
+    post.body = request.json.get('body', post.body)
+    db.session.add(post)
     return jsonify(post.to_json())
