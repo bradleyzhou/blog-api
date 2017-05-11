@@ -1,3 +1,4 @@
+from flask import g
 from flask import jsonify
 from flask import request
 from flask import url_for
@@ -6,6 +7,7 @@ from flask import current_app
 from ..models import Post
 from .. import db
 from . import api
+from .errors import forbidden
 from ..exceptions import NotFoundError
 
 
@@ -41,7 +43,7 @@ def get_post(id):
 @api.route('/posts/', methods=['POST'])
 def new_post():
     post = Post.from_json(request.json)
-    # post.author = g.current_user
+    post.author = g.current_user
     db.session.add(post)
     db.session.commit()
     return jsonify(post.to_json()), 201, \
@@ -53,6 +55,8 @@ def edit_post(id):
     post = Post.query.get(id)
     if post is None:
         raise NotFoundError('post not found')
+    if g.current_user != post.author:
+        return forbidden('Insufficient permissions')
     post.body = request.json.get('body', post.body)
     db.session.add(post)
     return jsonify(post.to_json())
