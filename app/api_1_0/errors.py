@@ -29,6 +29,12 @@ def not_found(message):
     return response
 
 
+def not_allowed(message):
+    response = jsonify({'error': 'not allowed', 'message': message})
+    response.status_code = 405
+    return response
+
+
 def server_error(message):
     response = jsonify({'error': 'internal error', 'message': message})
     response.status_code = 500
@@ -53,6 +59,11 @@ def e403(e):
 @api.app_errorhandler(404)
 def e404(e):
     return not_found(str(e))
+
+
+@api.app_errorhandler(405)
+def e405(e):
+    return not_allowed(str(e))
 
 
 @api.app_errorhandler(500)

@@ -5,13 +5,17 @@ from flask import url_for
 from flask import current_app
 
 from ..models import Post
+from ..models import Permission
 from .. import db
+from ..exceptions import ValidationError
 from . import api
 from .errors import forbidden
-from ..exceptions import NotFoundError
+from .errors import not_found
+from .decorators import permission_required
 
 
 @api.route('/posts/')
+@permission_required(Permission.READ_ARTICLES)
 def get_posts():
     page = request.args.get('page', 1, type=int)
     pagination = Post.query.paginate(
@@ -33,15 +37,23 @@ def get_posts():
 
 
 @api.route('/posts/<int:id>')
+@permission_required(Permission.READ_ARTICLES)
 def get_post(id):
     post = Post.query.get(id)
     if post is None:
-        raise NotFoundError('post not found')
+        return not_found('post not found')
     return jsonify(post.to_json())
 
 
+def validate_request_json():
+    if request.json is None:
+        raise ValidationError('Invalid JSON data')
+
+
 @api.route('/posts/', methods=['POST'])
+@permission_required(Permission.WRITE_ARTICLES)
 def new_post():
+    validate_request_json()
     post = Post.from_json(request.json)
     post.author = g.current_user
     db.session.add(post)
@@ -51,12 +63,15 @@ def new_post():
 
 
 @api.route('/posts/<int:id>', methods=['PUT'])
+@permission_required(Permission.WRITE_ARTICLES)
 def edit_post(id):
+    validate_request_json()
     post = Post.query.get(id)
     if post is None:
-        raise NotFoundError('post not found')
+        return not_found('post not found')
     if g.current_user != post.author:
         return forbidden('Insufficient permissions')
+    post.title = request.json.get('title', post.title)
     post.body = request.json.get('body', post.body)
     db.session.add(post)
     return jsonify(post.to_json())
