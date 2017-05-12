@@ -33,8 +33,8 @@ def fake():
 
 
 @app.cli.command()
-def setup():
-    """Setup app administrator"""
+def add_admin():
+    """Add a new app administrator from $ADMIN_NAME $ADMIN_EMAIL $ADMIN_KEY"""
     username = app.config['ADMIN_NAME']
     email = app.config['ADMIN_EMAIL']
     password = app.config['ADMIN_KEY']
