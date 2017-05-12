@@ -6,11 +6,11 @@ from flask import current_app
 
 from ..models import Post
 from ..models import Permission
+from ..validators import validate_request_json
 from .. import db
 from . import api
 from .errors import forbidden
 from .errors import not_found
-from .errors import validate_request_json
 from .decorators import permission_required
 
 

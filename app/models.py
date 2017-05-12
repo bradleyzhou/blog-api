@@ -14,6 +14,8 @@ from .exceptions import ValidationError
 class Permission:
     READ_ARTICLES = 0x01
     WRITE_ARTICLES = 0x02
+    CREATE_USERS = 0x04
+    RESET_PASSWORD = 0x08
     ADMINISTER = 0x80
 
 
@@ -124,6 +126,13 @@ class User(db.Model):
             'posts': url_for('api.get_user_posts', id=self.id, _external=True),
         }
         return json_user
+
+    @staticmethod
+    def from_json(json_user):
+        return User(username=json_user.get('username'),
+                    email=json_user.get('email'),
+                    password=json_user.get('password'),
+                    )
 
 
 class AnonymousUser(object):

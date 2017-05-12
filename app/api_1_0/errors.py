@@ -1,14 +1,9 @@
 from flask import jsonify
-from flask import request
 
-from app.exceptions import ValidationError
-from app.exceptions import NotFoundError
+from ..exceptions import ValidationError
+from ..exceptions import NotFoundError
+from ..exceptions import ForbiddenError
 from . import api
-
-
-def validate_request_json():
-    if request.json is None:
-        raise ValidationError('Invalid JSON data')
 
 
 def bad_request(message):
@@ -85,3 +80,8 @@ def validation_error(e):
 @api.errorhandler(NotFoundError)
 def not_found_error(e):
     return not_found(e.args[0])
+
+
+@api.errorhandler(ForbiddenError)
+def forbidden_error(e):
+    return forbidden(e.args[0])

@@ -4,3 +4,7 @@ class NotFoundError(ValueError):
 
 class ValidationError(ValueError):
     pass
+
+
+class ForbiddenError(Exception):
+    pass

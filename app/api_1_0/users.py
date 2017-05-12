@@ -1,11 +1,22 @@
+from flask import g
 from flask import jsonify
 from flask import request
 from flask import current_app
 from flask import url_for
 
-from . import api
-from ..models import User, Post
+from .. import db
+from ..models import User
+from ..models import Post
+from ..models import Permission
 from ..exceptions import NotFoundError
+from ..exceptions import ForbiddenError
+from ..exceptions import ValidationError
+from ..validators import validate_request_json
+from ..validators import validate_username
+from ..validators import validate_password
+from ..validators import validate_email
+from . import api
+from .decorators import permission_required
 
 
 @api.route('/users/<int:id>')
@@ -38,3 +49,32 @@ def get_user_posts(id):
         'next': next,
         'count': pagination.total,
     })
+
+
+@api.route('/users/', methods=['POST'])
+@permission_required(Permission.CREATE_USERS)
+def new_user():
+    validate_request_json()
+    validate_username(request.json.get('username'))
+    validate_email(request.json.get('email'))
+    validate_password(request.json.get('password'))
+    user = User.from_json(request.json)
+    db.session.add(user)
+    db.session.commit()
+    return jsonify(user.to_json()), 201, \
+        {'Location': url_for('api.get_user', id=user.id, _external=True)}
+
+
+@api.route('/users/<int:id>', methods=['PUT'])
+def change_password(id):
+    validate_request_json()
+    validate_password(request.json.get('password'))
+    user = User.query.get(id)
+    if user is None:
+        raise ValidationError('user not found')
+    if not g.current_user.is_administrator() and g.current_user != user:
+        raise ForbiddenError('Insufficient permissions')
+    user.password = request.json.get('password')
+    db.session.add(user)
+    db.session.commit()
+    return jsonify(user.to_json())
