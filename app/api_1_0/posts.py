@@ -7,10 +7,10 @@ from flask import current_app
 from ..models import Post
 from ..models import Permission
 from .. import db
-from ..exceptions import ValidationError
 from . import api
 from .errors import forbidden
 from .errors import not_found
+from .errors import validate_request_json
 from .decorators import permission_required
 
 
@@ -43,11 +43,6 @@ def get_post(id):
     if post is None:
         return not_found('post not found')
     return jsonify(post.to_json())
-
-
-def validate_request_json():
-    if request.json is None:
-        raise ValidationError('Invalid JSON data')
 
 
 @api.route('/posts/', methods=['POST'])
