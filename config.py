@@ -5,12 +5,14 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
+    ADMIN_NAME = os.environ.get('ADMIN_NAME')
+    ADMIN_KEY = os.environ.get('ADMIN_KEY')
     SECRET_KEY = os.environ.get('SECRET_KEY') or \
         'DLYItYU3V*ZacM2Ewm#Ny6oAPtv@p79g'
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_RECORD_QUERIES = True
-    POSTS_PER_PAGE = 20
+    POSTS_PER_PAGE = 10
 
     @staticmethod
     def init_app(app):

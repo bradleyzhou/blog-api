@@ -30,3 +30,19 @@ def fake():
     db.session.add(u2)
     db.session.commit()
     Post.generate_fake(15)
+
+
+@app.cli.command()
+def setup():
+    """Setup app administrator"""
+    username = app.config['ADMIN_NAME']
+    email = app.config['ADMIN_EMAIL']
+    password = app.config['ADMIN_KEY']
+    if not username or not email or not password:
+        raise ValueError('Unable to create administrator: Insufficient information')
+    Role.insert_roles()
+    admin = User(username=app.config['ADMIN_NAME'],
+                 email=app.config['ADMIN_EMAIL'],
+                 password=app.config['ADMIN_KEY'])
+    db.session.add(admin)
+    db.session.commit()
