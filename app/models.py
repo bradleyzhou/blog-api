@@ -1,4 +1,6 @@
+import bleach
 from datetime import datetime
+from markdown import markdown
 from flask import url_for
 from flask import current_app
 from werkzeug.security import generate_password_hash
@@ -161,6 +163,15 @@ class Post(db.Model):
             db.session.add(p)
             db.session.commit()
 
+    @staticmethod
+    def body_to_html(target, value, oldvalue, initiator):
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
+                        'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
+                        'h1', 'h2', 'h3', 'p']
+        target.body_html = bleach.linkify(bleach.clean(
+            markdown(value, output_format='html'),
+            tags=allowed_tags, strip=True))
+
     def to_json(self):
         json_post = {
             'url': url_for('api.get_post', id=self.id, _external=True),
@@ -181,3 +192,6 @@ class Post(db.Model):
         if body is None or body == '':
             raise ValidationError('Post does not have a body')
         return Post(title=title, body=body)
+
+
+db.event.listen(Post.body, 'set', Post.body_to_html)
