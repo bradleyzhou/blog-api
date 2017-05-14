@@ -15,24 +15,6 @@ app.cli.add_command(MigrateCommand, name='db')
 
 
 @app.cli.command()
-def fake():
-    """Generate some fake data"""
-    Role.insert_roles()
-    u1 = User(username='me',
-              email='a@b.com',
-              password='cat',
-              )
-    u2 = User(username='he',
-              email='b@b.com',
-              password='dog',
-              )
-    db.session.add(u1)
-    db.session.add(u2)
-    db.session.commit()
-    Post.generate_fake(15)
-
-
-@app.cli.command()
 def add_admin():
     """Add a new app administrator from $ADMIN_NAME $ADMIN_EMAIL $ADMIN_KEY"""
     username = app.config['ADMIN_NAME']
