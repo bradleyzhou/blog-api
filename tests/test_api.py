@@ -247,6 +247,19 @@ class APITestCase(unittest.TestCase):
         json_response = json.loads(response.data.decode('utf-8'))
         self.assertTrue(json_response['username'] == 'susan')
 
+        # non-existant user
+        response = self.client.get(
+            url_for('api.get_user', id=9999),
+            headers=self.get_api_headers('susan@example.com', 'dog')
+            )
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.get(
+            url_for('api.get_user_posts', id=9999),
+            headers=self.get_api_headers('susan@example.com', 'dog')
+            )
+        self.assertEqual(response.status_code, 404)
+
     def test_posts_permission(self):
         # add two users and an admin
         r = Role.query.filter_by(name='User').first()
@@ -356,6 +369,16 @@ class APITestCase(unittest.TestCase):
         db.session.add_all([u1, u2])
         db.session.commit()
 
+        # change non-existant user's password
+        response = self.client.put(
+            url_for('api.change_password', id=9999),
+            headers=self.get_api_headers('john@example.com', 'cat'),
+            data=json.dumps({
+                'password': 'changed',
+                }))
+        self.assertEqual(response.status_code, 400)
+
+        # change other user's password
         response = self.client.put(
             url_for('api.change_password', id=u2.id),
             headers=self.get_api_headers('john@example.com', 'cat'),
@@ -363,6 +386,8 @@ class APITestCase(unittest.TestCase):
                 'password': 'changed',
                 }))
         self.assertEqual(response.status_code, 403)
+
+        # change password by self
         response = self.client.put(
             url_for('api.change_password', id=u1.id),
             headers=self.get_api_headers('john@example.com', 'cat'),
@@ -370,6 +395,8 @@ class APITestCase(unittest.TestCase):
                 'password': 'changed',
                 }))
         self.assertEqual(response.status_code, 200)
+
+        # bad auth indicates password has changed
         response = self.client.get(
             url_for('api.get_posts'),
             headers=self.get_api_headers('john@example.com', 'cat'),
