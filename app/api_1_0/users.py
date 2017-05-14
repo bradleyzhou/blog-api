@@ -65,7 +65,7 @@ def new_user():
         {'Location': url_for('api.get_user', id=user.id, _external=True)}
 
 
-@api.route('/users/<int:id>', methods=['PUT'])
+@api.route('/users/<int:id>/password', methods=['PUT'])
 def change_password(id):
     validate_request_json()
     validate_password(request.json.get('password'))
