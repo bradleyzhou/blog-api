@@ -47,14 +47,29 @@ class APITestCase(unittest.TestCase):
                                    content_type='application/json')
         self.assertEqual(response.status_code, 200)
 
-    def test_bad_password(self):
+    def test_password_auth(self):
         r = Role.query.filter_by(name='User').first()
         self.assertIsNotNone(r)
         u = User(email='john@example.com', password='cat',
-                 username='John', role=r)
+                 username='john', role=r)
         db.session.add(u)
         db.session.commit()
 
+        # email and password
+        response = self.client.get(
+            url_for('api.get_posts'),
+            headers=self.get_api_headers('john@example.com', 'cat')
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # username and password
+        response = self.client.get(
+            url_for('api.get_posts'),
+            headers=self.get_api_headers('john', 'cat')
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # bad password
         response = self.client.get(
             url_for('api.get_posts'),
             headers=self.get_api_headers('john@example.com', 'dog')
@@ -63,11 +78,25 @@ class APITestCase(unittest.TestCase):
         json_response = json.loads(response.data.decode('utf-8'))
         self.assertTrue(json_response['error'] == 'unauthorized')
 
+        # bad username
+        response = self.client.get(
+            url_for('api.get_posts'),
+            headers=self.get_api_headers('baduser', 'dog')
+        )
+        self.assertEqual(response.status_code, 401)
+
+        # bad email
+        response = self.client.get(
+            url_for('api.get_posts'),
+            headers=self.get_api_headers('baduser@example.com', 'dog')
+        )
+        self.assertEqual(response.status_code, 401)
+
     def test_token_auth(self):
         r = Role.query.filter_by(name='User').first()
         self.assertIsNotNone(r)
         u = User(email='john@example.com', password='cat',
-                 username='John', role=r)
+                 username='john', role=r)
         db.session.add(u)
         db.session.commit()
 
@@ -75,6 +104,20 @@ class APITestCase(unittest.TestCase):
         response = self.client.get(
             url_for('api.get_token'),
             headers=self.get_api_headers('bad-token', '')
+        )
+        self.assertEqual(response.status_code, 401)
+
+        # get a token by an anonymous user
+        response = self.client.get(
+            url_for('api.get_token'),
+            headers=self.get_api_headers('', '')
+        )
+        self.assertEqual(response.status_code, 401)
+
+        # get a token by a bad user
+        response = self.client.get(
+            url_for('api.get_token'),
+            headers=self.get_api_headers('baduser', 'cat')
         )
         self.assertEqual(response.status_code, 401)
 
@@ -107,7 +150,7 @@ class APITestCase(unittest.TestCase):
         r = Role.query.filter_by(name='User').first()
         self.assertIsNotNone(r)
         u = User(email='john@example.com', password='cat',
-                 username='John', role=r)
+                 username='john', role=r)
         db.session.add(u)
         db.session.commit()
 

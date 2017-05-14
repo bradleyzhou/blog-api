@@ -24,9 +24,16 @@ class UserModelTestCase(unittest.TestCase):
         db.drop_all()
         self.app_context.pop()
 
+    def test_user_field(self):
+        User.generate_fake(1)
+        u = User.query.first()
+        self.assertIsNotNone(u.username)
+        self.assertIsNotNone(u.email)
+        self.assertIsNotNone(u.role)
+
     def test_password_setter(self):
         u = User(password='cat')
-        self.assertTrue(u.password_hash is not None)
+        self.assertIsNotNone(u.password_hash)
 
     def test_no_password_getter(self):
         u = User(password='cat')
@@ -69,6 +76,9 @@ class UserModelTestCase(unittest.TestCase):
 
     def test_roles_and_permissions(self):
         u = User(email='john@example.com', password='cat')
+        r = Role.query.filter_by(name='User').first()
+        self.assertEqual(u.role, r)
+        self.assertFalse(u.is_administrator())
         self.assertTrue(u.can(Permission.READ_ARTICLES))
         self.assertTrue(u.can(Permission.WRITE_ARTICLES))
         self.assertFalse(u.can(Permission.CREATE_USERS))
@@ -76,6 +86,7 @@ class UserModelTestCase(unittest.TestCase):
 
     def test_anonymous_user(self):
         u = AnonymousUser()
+        self.assertFalse(u.is_administrator())
         self.assertTrue(u.can(Permission.READ_ARTICLES))
         self.assertFalse(u.can(Permission.WRITE_ARTICLES))
         self.assertFalse(u.can(Permission.CREATE_USERS))
@@ -86,6 +97,7 @@ class UserModelTestCase(unittest.TestCase):
         self.app.config['ADMIN_EMAIL'] = admin_email
         u = User(email=admin_email, password='cat')
         self.app.config['ADMIN_EMAIL'] = ''
+        self.assertTrue(u.is_administrator())
         self.assertTrue(u.can(Permission.READ_ARTICLES))
         self.assertTrue(u.can(Permission.WRITE_ARTICLES))
         self.assertTrue(u.can(Permission.CREATE_USERS))
