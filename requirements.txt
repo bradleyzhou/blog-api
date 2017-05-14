@@ -1,6 +1,7 @@
 alembic==0.9.1
 bleach==2.0.0
 click==6.7
+coverage==4.4
 Flask==0.12.1
 Flask-HTTPAuth==3.2.2
 Flask-Migrate==2.0.3
