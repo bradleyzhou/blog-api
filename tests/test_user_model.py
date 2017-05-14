@@ -65,3 +65,47 @@ class UserModelTestCase(unittest.TestCase):
         token = u.generate_auth_token(expiration=1)
         time.sleep(2)
         self.assertTrue(User.verify_auth_token(token) != u)
+
+    def test_roles_and_permissions(self):
+        u = User(email='john@example.com', password='cat')
+        self.assertTrue(u.can(Permission.READ_ARTICLES))
+        self.assertTrue(u.can(Permission.WRITE_ARTICLES))
+        self.assertFalse(u.can(Permission.CREATE_USERS))
+        self.assertFalse(u.can(Permission.ADMINISTER))
+
+    def test_anonymous_user(self):
+        u = AnonymousUser()
+        self.assertTrue(u.can(Permission.READ_ARTICLES))
+        self.assertFalse(u.can(Permission.WRITE_ARTICLES))
+        self.assertFalse(u.can(Permission.CREATE_USERS))
+        self.assertFalse(u.can(Permission.ADMINISTER))
+
+    def test_administrator(self):
+        admin_email = 'admin@example.com'
+        self.app.config['ADMIN_EMAIL'] = admin_email
+        u = User(email=admin_email, password='cat')
+        self.app.config['ADMIN_EMAIL'] = ''
+        self.assertTrue(u.can(Permission.READ_ARTICLES))
+        self.assertTrue(u.can(Permission.WRITE_ARTICLES))
+        self.assertTrue(u.can(Permission.CREATE_USERS))
+        self.assertTrue(u.can(Permission.RESET_PASSWORD))
+        self.assertTrue(u.can(Permission.ADMINISTER))
+
+    def test_to_json(self):
+        u = User(username='John', email='john@example.com', password='cat')
+        db.session.add(u)
+        db.session.commit()
+        json_user = u.to_json()
+        expected_keys = ['url', 'username', 'email', 'posts']
+        self.assertEqual(sorted(json_user.keys()), sorted(expected_keys))
+        self.assertTrue('api/v1.0/users/' in json_user['url'])
+
+    def test_from_json(self):
+        json_user = {
+            'username': 'John',
+            'email': 'john@example.com',
+            'password': 'cat',
+        }
+        u = User.from_json(json_user)
+        self.assertEqual(u.username, json_user['username'])
+        self.assertEqual(u.email, json_user['email'])
