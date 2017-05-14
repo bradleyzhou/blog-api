@@ -6,6 +6,7 @@ from flask import url_for
 from app import create_app
 from app import db
 from app.models import User
+from app.models import Post
 from app.models import Role
 
 
@@ -153,6 +154,12 @@ class APITestCase(unittest.TestCase):
                  username='john', role=r)
         db.session.add(u)
         db.session.commit()
+
+        # get the new post
+        response = self.client.get(
+            url_for('api.get_post', id=99999),
+            headers=self.get_api_headers('john@example.com', 'cat'))
+        self.assertEqual(response.status_code, 404)
 
         # write an empty post
         response = self.client.post(
@@ -368,3 +375,45 @@ class APITestCase(unittest.TestCase):
             headers=self.get_api_headers('john@example.com', 'cat'),
             )
         self.assertEqual(response.status_code, 401)
+
+    def test_post_pagination(self):
+        n_per_page = self.app.config['POSTS_PER_PAGE']
+        n = 2 * n_per_page + 1
+        User.generate_fake(20)
+        Post.generate_fake(n)
+
+        # page 1
+        response = self.client.get(
+            url_for('api.get_posts'),
+            headers=self.get_api_headers('', ''),
+        )
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(json_response['count'], n)
+        self.assertEqual(len(json_response['posts']), n_per_page)
+        self.assertIsNone(json_response['prev'])
+        self.assertIsNotNone(json_response['next'])
+
+        # page 2
+        response = self.client.get(
+            json_response['next'],
+            headers=self.get_api_headers('', ''),
+        )
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(json_response['count'], n)
+        self.assertEqual(len(json_response['posts']), n_per_page)
+        self.assertIsNotNone(json_response['prev'])
+        self.assertIsNotNone(json_response['next'])
+
+        # last page
+        response = self.client.get(
+            json_response['next'],
+            headers=self.get_api_headers('', ''),
+        )
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(json_response['count'], n)
+        self.assertEqual(len(json_response['posts']), 1)
+        self.assertIsNotNone(json_response['prev'])
+        self.assertIsNone(json_response['next'])
