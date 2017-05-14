@@ -1,6 +1,5 @@
 import unittest
 import time
-from datetime import datetime
 
 from app import create_app
 from app import db
@@ -13,6 +12,8 @@ from app.models import Permission
 class UserModelTestCase(unittest.TestCase):
     def setUp(self):
         self.app = create_app('testing')
+        # allow testing url_for() with _external=True
+        self.app.config['SERVER_NAME'] = 'test.test'
         self.app_context = self.app.app_context()
         self.app_context.push()
         db.create_all()
