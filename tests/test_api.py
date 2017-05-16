@@ -157,7 +157,7 @@ class APITestCase(unittest.TestCase):
 
         # get the new post
         response = self.client.get(
-            url_for('api.get_post', id=99999),
+            url_for('api.get_post', slug='xki9s9999'),
             headers=self.get_api_headers('john@example.com', 'cat'))
         self.assertEqual(response.status_code, 404)
 
@@ -189,10 +189,10 @@ class APITestCase(unittest.TestCase):
             headers=self.get_api_headers('john@example.com', 'cat'))
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.data.decode('utf-8'))
-        self.assertTrue(json_response['url'] == url)
-        self.assertTrue(json_response['body'] == 'body of the *blog* post')
-        self.assertTrue(json_response['body_html'] ==
-                        '<p>body of the <em>blog</em> post</p>')
+        self.assertEqual(json_response['url'], url)
+        self.assertEqual(json_response['body'], 'body of the *blog* post')
+        self.assertEqual(json_response['body_html'],
+                         '<p>body of the <em>blog</em> post</p>')
         json_post = json_response
 
         # get the post from the user
@@ -202,8 +202,8 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.data.decode('utf-8'))
         self.assertIsNotNone(json_response.get('posts'))
-        self.assertTrue(json_response.get('count', 0) == 1)
-        self.assertTrue(json_response['posts'][0] == json_post)
+        self.assertEqual(json_response.get('count', 0), 1)
+        self.assertEqual(json_response['posts'][0], json_post)
 
         # edit post
         response = self.client.put(
@@ -215,10 +215,117 @@ class APITestCase(unittest.TestCase):
                 }))
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.data.decode('utf-8'))
-        self.assertTrue(json_response['url'] == url)
-        self.assertTrue(json_response['title'] == 'Changed Title')
-        self.assertTrue(json_response['body'] == 'updated body')
-        self.assertTrue(json_response['body_html'] == '<p>updated body</p>')
+        self.assertNotEqual(json_response['url'], url)  # title changed
+        self.assertEqual(json_response['title'], 'Changed Title')
+        self.assertEqual(json_response['body'], 'updated body')
+        self.assertEqual(json_response['body_html'], '<p>updated body</p>')
+
+        # title slug is in url
+        response = self.client.post(
+            url_for('api.new_post'),
+            headers=self.get_api_headers('john@example.com', 'cat'),
+            data=json.dumps({
+                'body': 'blog body',
+                'title': 'The Greek in a Box with an Clock',
+                }))
+        self.assertEqual(response.status_code, 201)
+        title_slug = 'greek-in-box-with-clock'
+        url = response.headers.get('Location')
+        self.assertIn(title_slug, url)
+        self.assertNotIn('The', url)
+        self.assertNotIn('a-', url)
+        self.assertNotIn('an-', url)
+        self.assertNotIn('Great', url)
+
+        # title itself is not slugified
+        response = self.client.get(
+            url,
+            headers=self.get_api_headers('john@example.com', 'cat'))
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(json_response['url'], url)
+        self.assertEqual(json_response['title'], 'The Greek in a Box with an Clock')
+
+        # title change result in url change
+        response = self.client.put(
+            url,
+            headers=self.get_api_headers('john@example.com', 'cat'),
+            data=json.dumps({
+                'body': 'updated body',
+                'title': 'Changed Title',
+                }))
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.data.decode('utf-8'))
+        self.assertIn('changed-title', json_response['url'])
+
+        # title slug collision
+        response = self.client.post(
+            url_for('api.new_post'),
+            headers=self.get_api_headers('john@example.com', 'cat'),
+            data=json.dumps({
+                'body': 'blog body 1',
+                'title': 'Title',
+                }))
+        self.assertEqual(response.status_code, 201)
+        url = response.headers.get('Location')
+        title_slug = 'title'
+        self.assertIn(title_slug, url)
+
+        # title is the same with slug collision
+        response = self.client.get(
+            url,
+            headers=self.get_api_headers('john@example.com', 'cat'))
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(json_response['url'], url)
+        self.assertEqual(json_response['title'], 'Title')
+        self.assertEqual(json_response['body'], 'blog body 1')
+
+        # title slug collision 1
+        response = self.client.post(
+            url_for('api.new_post'),
+            headers=self.get_api_headers('john@example.com', 'cat'),
+            data=json.dumps({
+                'body': 'blog body 2',
+                'title': 'Title',
+                }))
+        self.assertEqual(response.status_code, 201)
+        url = response.headers.get('Location')
+        title_slug = 'title-2'
+        self.assertIn(title_slug, url)
+
+        # title is the same with slug collision
+        response = self.client.get(
+            url,
+            headers=self.get_api_headers('john@example.com', 'cat'))
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(json_response['url'], url)
+        self.assertEqual(json_response['title'], 'Title')
+        self.assertEqual(json_response['body'], 'blog body 2')
+
+        # title slug collision 2
+        response = self.client.post(
+            url_for('api.new_post'),
+            headers=self.get_api_headers('john@example.com', 'cat'),
+            data=json.dumps({
+                'body': 'blog body 3',
+                'title': 'Title',
+                }))
+        self.assertEqual(response.status_code, 201)
+        url = response.headers.get('Location')
+        title_slug = 'title-3'
+        self.assertIn(title_slug, url)
+
+        # title is the same with slug collision
+        response = self.client.get(
+            url,
+            headers=self.get_api_headers('john@example.com', 'cat'))
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(json_response['url'], url)
+        self.assertEqual(json_response['title'], 'Title')
+        self.assertEqual(json_response['body'], 'blog body 3')
 
     def test_users(self):
         # add two users
@@ -297,15 +404,7 @@ class APITestCase(unittest.TestCase):
         url2 = response.headers.get('Location')
         self.assertIsNotNone(url2)
 
-        # edit post by a different author
-        response = self.client.put(
-            url1,
-            headers=self.get_api_headers('john@example.com', 'cat'),
-            data=json.dumps({
-                'body': 'updated body 1',
-                'title': 'Changed Title 1',
-                }))
-        self.assertEqual(response.status_code, 200)
+        # not author, cannot edit
         response = self.client.put(
             url2,
             headers=self.get_api_headers('john@example.com', 'cat'),
@@ -324,6 +423,16 @@ class APITestCase(unittest.TestCase):
                 'title': 'Changed Title 3',
                 }))
         self.assertEqual(response.status_code, 403)
+
+        # edit post by author
+        response = self.client.put(
+            url1,
+            headers=self.get_api_headers('john@example.com', 'cat'),
+            data=json.dumps({
+                'body': 'updated body 1',
+                'title': 'Changed Title 1',
+                }))
+        self.assertEqual(response.status_code, 200)
 
     def test_create_user(self):
         # add an admin and a user

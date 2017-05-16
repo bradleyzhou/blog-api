@@ -36,10 +36,10 @@ def get_posts():
     })
 
 
-@api.route('/posts/<int:id>')
+@api.route('/posts/<string:slug>')
 @permission_required(Permission.READ_ARTICLES)
-def get_post(id):
-    post = Post.query.get(id)
+def get_post(slug):
+    post = Post.query.filter_by(slug=slug).first()
     if post is None:
         return not_found('post not found')
     return jsonify(post.to_json())
@@ -54,14 +54,14 @@ def new_post():
     db.session.add(post)
     db.session.commit()
     return jsonify(post.to_json()), 201, \
-        {'Location': url_for('api.get_post', id=post.id, _external=True)}
+        {'Location': url_for('api.get_post', slug=post.slug, _external=True)}
 
 
-@api.route('/posts/<int:id>', methods=['PUT'])
+@api.route('/posts/<string:slug>', methods=['PUT'])
 @permission_required(Permission.WRITE_ARTICLES)
-def edit_post(id):
+def edit_post(slug):
     validate_request_json()
-    post = Post.query.get(id)
+    post = Post.query.filter_by(slug=slug).first()
     if post is None:
         return not_found('post not found')
     if g.current_user != post.author:

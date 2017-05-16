@@ -1,6 +1,7 @@
 import bleach
 from datetime import datetime
 from markdown import markdown
+from slugify import slugify
 from flask import url_for
 from flask import current_app
 from werkzeug.security import generate_password_hash
@@ -149,6 +150,7 @@ class Post(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.Text)
+    slug = db.Column(db.Text, index=True, unique=True)
     body = db.Column(db.Text)
     body_html = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
@@ -173,6 +175,27 @@ class Post(db.Model):
             db.session.commit()
 
     @staticmethod
+    def slugify_title(text, separator='-', max_length=40):
+        slug = slugify(text,
+                       separator=separator,
+                       stopwords=['the', 'a', 'an'],
+                       max_length=max_length,
+                       word_boundary=True,
+                       save_order=True,
+                       )
+        counter = 2
+        new_slug = slug
+        while db.session.query(Post.query.filter_by(slug=new_slug).exists()).scalar():
+            new_slug = "{}{}{}".format(slug, separator, counter)
+            counter += 1
+        return new_slug
+
+    @staticmethod
+    def title_to_slug(target, value, oldvalue, initiator):
+        if value and not value == oldvalue:
+            target.slug = Post.slugify_title(value)
+
+    @staticmethod
     def body_to_html(target, value, oldvalue, initiator):
         allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
                         'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
@@ -183,7 +206,7 @@ class Post(db.Model):
 
     def to_json(self):
         json_post = {
-            'url': url_for('api.get_post', id=self.id, _external=True),
+            'url': url_for('api.get_post', slug=self.slug, _external=True),
             'title': self.title,
             'body': self.body,
             'body_html': self.body_html,
@@ -204,3 +227,4 @@ class Post(db.Model):
 
 
 db.event.listen(Post.body, 'set', Post.body_to_html)
+db.event.listen(Post.title, 'set', Post.title_to_slug)
