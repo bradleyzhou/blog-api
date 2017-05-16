@@ -121,10 +121,10 @@ class User(db.Model):
 
     def to_json(self):
         json_user = {
-            'url': url_for('api.get_user', id=self.id, _external=True),
+            'url': url_for('api.get_user', username=self.username, _external=True),
             'username': self.username,
             'email': self.email,
-            'posts': url_for('api.get_user_posts', id=self.id, _external=True),
+            'posts': url_for('api.get_user_posts', username=self.username, _external=True),
         }
         return json_user
 
@@ -211,7 +211,7 @@ class Post(db.Model):
             'body': self.body,
             'body_html': self.body_html,
             'timestamp': self.timestamp,
-            'author': url_for('api.get_user', id=self.author_id, _external=True),
+            'author': url_for('api.get_user', username=self.author.username, _external=True),
         }
         return json_post
 

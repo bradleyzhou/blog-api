@@ -19,17 +19,17 @@ from . import api
 from .decorators import permission_required
 
 
-@api.route('/users/<int:id>')
-def get_user(id):
-    user = User.query.get(id)
+@api.route('/users/<string:username>')
+def get_user(username):
+    user = User.query.filter_by(username=username).first()
     if user is None:
         raise NotFoundError('user not found')
     return jsonify(user.to_json())
 
 
-@api.route('/users/<int:id>/posts')
-def get_user_posts(id):
-    user = User.query.get(id)
+@api.route('/users/<string:username>/posts')
+def get_user_posts(username):
+    user = User.query.filter_by(username=username).first()
     if user is None:
         raise NotFoundError('user not found')
     page = request.args.get('page', 1, type=int)
@@ -62,14 +62,14 @@ def new_user():
     db.session.add(user)
     db.session.commit()
     return jsonify(user.to_json()), 201, \
-        {'Location': url_for('api.get_user', id=user.id, _external=True)}
+        {'Location': url_for('api.get_user', username=user.username, _external=True)}
 
 
-@api.route('/users/<int:id>/password', methods=['PUT'])
-def change_password(id):
+@api.route('/users/<string:username>/password', methods=['PUT'])
+def change_password(username):
     validate_request_json()
     validate_password(request.json.get('password'))
-    user = User.query.get(id)
+    user = User.query.filter_by(username=username).first()
     if user is None:
         raise ValidationError('user not found')
     if not g.current_user.is_administrator() and g.current_user != user:

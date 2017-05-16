@@ -197,7 +197,7 @@ class APITestCase(unittest.TestCase):
 
         # get the post from the user
         response = self.client.get(
-            url_for('api.get_user_posts', id=u.id),
+            url_for('api.get_user_posts', username=u.username),
             headers=self.get_api_headers('john@example.com', 'cat'))
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.data.decode('utf-8'))
@@ -340,14 +340,14 @@ class APITestCase(unittest.TestCase):
 
         # get users
         response = self.client.get(
-            url_for('api.get_user', id=u1.id),
+            url_for('api.get_user', username=u1.username),
             headers=self.get_api_headers('susan@example.com', 'dog')
             )
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.data.decode('utf-8'))
         self.assertTrue(json_response['username'] == 'john')
         response = self.client.get(
-            url_for('api.get_user', id=u2.id),
+            url_for('api.get_user', username=u2.username),
             headers=self.get_api_headers('susan@example.com', 'dog')
             )
         self.assertEqual(response.status_code, 200)
@@ -356,13 +356,13 @@ class APITestCase(unittest.TestCase):
 
         # non-existant user
         response = self.client.get(
-            url_for('api.get_user', id=9999),
+            url_for('api.get_user', username='s99si99'),
             headers=self.get_api_headers('susan@example.com', 'dog')
             )
         self.assertEqual(response.status_code, 404)
 
         response = self.client.get(
-            url_for('api.get_user_posts', id=9999),
+            url_for('api.get_user_posts', username=9999),
             headers=self.get_api_headers('susan@example.com', 'dog')
             )
         self.assertEqual(response.status_code, 404)
@@ -447,7 +447,7 @@ class APITestCase(unittest.TestCase):
         db.session.add_all([adminu, u])
         db.session.commit()
 
-        # create a new user
+        # normal user cannot create a new user
         response = self.client.post(
             url_for('api.new_user'),
             headers=self.get_api_headers('susan@example.com', 'dog'),
@@ -457,6 +457,8 @@ class APITestCase(unittest.TestCase):
                 'password': 'rain',
                 }))
         self.assertEqual(response.status_code, 403)
+
+        # admin can creat new user
         response = self.client.post(
             url_for('api.new_user'),
             headers=self.get_api_headers('admin@example.com', 'cat'),
@@ -466,6 +468,28 @@ class APITestCase(unittest.TestCase):
                 'password': 'rain',
                 }))
         self.assertEqual(response.status_code, 201)
+
+        # username collision
+        response = self.client.post(
+            url_for('api.new_user'),
+            headers=self.get_api_headers('admin@example.com', 'cat'),
+            data=json.dumps({
+                'username': 'newu',
+                'email': 'newu1@example.com',
+                'password': 'rain',
+                }))
+        self.assertEqual(response.status_code, 400)
+
+        # user email collision
+        response = self.client.post(
+            url_for('api.new_user'),
+            headers=self.get_api_headers('admin@example.com', 'cat'),
+            data=json.dumps({
+                'username': 'newu1',
+                'email': 'newu@example.com',
+                'password': 'rain',
+                }))
+        self.assertEqual(response.status_code, 400)
 
     def test_change_password(self):
         # add two users
@@ -480,7 +504,7 @@ class APITestCase(unittest.TestCase):
 
         # change non-existant user's password
         response = self.client.put(
-            url_for('api.change_password', id=9999),
+            url_for('api.change_password', username='sp9d999g'),
             headers=self.get_api_headers('john@example.com', 'cat'),
             data=json.dumps({
                 'password': 'changed',
@@ -489,7 +513,7 @@ class APITestCase(unittest.TestCase):
 
         # change other user's password
         response = self.client.put(
-            url_for('api.change_password', id=u2.id),
+            url_for('api.change_password', username=u2.username),
             headers=self.get_api_headers('john@example.com', 'cat'),
             data=json.dumps({
                 'password': 'changed',
@@ -498,7 +522,7 @@ class APITestCase(unittest.TestCase):
 
         # change password by self
         response = self.client.put(
-            url_for('api.change_password', id=u1.id),
+            url_for('api.change_password', username=u1.username),
             headers=self.get_api_headers('john@example.com', 'cat'),
             data=json.dumps({
                 'password': 'changed',
