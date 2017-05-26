@@ -17,6 +17,8 @@ ADMIN_NAME=admin ADMIN_EMAIL=admin@example.com ADMIN_KEY=password FLASK_APP=mana
 ### Build Docker image
 Depends on [the `pu` image](https://github.com/bradleyzhou/pun)
 ```
+git clone https://github.com/bradleyzhou/blog-api.git
+cd blog-api
 docker build -t blogapi .
 ```
 
