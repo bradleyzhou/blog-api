@@ -29,7 +29,6 @@ class UserModelTestCase(unittest.TestCase):
         p = Post.query.first()
         self.assertIsNotNone(p.title)
         self.assertIsNotNone(p.body)
-        self.assertIsNotNone(p.body_html)
         self.assertIsNotNone(p.timestamp)
         self.assertEqual(p.author, u)
 
@@ -41,4 +40,3 @@ class UserModelTestCase(unittest.TestCase):
         p = Post.from_json(json_post)
         self.assertEqual(p.title, 'Title Json')
         self.assertEqual(p.body, 'Body from *Json*.')
-        self.assertEqual(p.body_html, '<p>Body from <em>Json</em>.</p>')

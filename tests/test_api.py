@@ -191,8 +191,6 @@ class APITestCase(unittest.TestCase):
         json_response = json.loads(response.data.decode('utf-8'))
         self.assertEqual(json_response['url'], url)
         self.assertEqual(json_response['body'], 'body of the *blog* post')
-        self.assertEqual(json_response['body_html'],
-                         '<p>body of the <em>blog</em> post</p>')
         json_post = json_response
 
         # get the post from the user
@@ -218,7 +216,6 @@ class APITestCase(unittest.TestCase):
         self.assertNotEqual(json_response['url'], url)  # title changed
         self.assertEqual(json_response['title'], 'Changed Title')
         self.assertEqual(json_response['body'], 'updated body')
-        self.assertEqual(json_response['body_html'], '<p>updated body</p>')
 
         # title slug is in url
         response = self.client.post(
