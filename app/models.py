@@ -2,6 +2,8 @@ from datetime import datetime
 from slugify import slugify
 from flask import url_for
 from flask import current_app
+from sqlalchemy.orm.base import NO_VALUE
+from sqlalchemy.orm.base import NEVER_SET
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
@@ -189,8 +191,11 @@ class Post(db.Model):
 
     @staticmethod
     def title_to_slug(target, value, oldvalue, initiator):
+        old_slug = None
+        if oldvalue is not NO_VALUE and oldvalue is not NEVER_SET:
+            old_slug = Post.slugify_title(oldvalue)
         new_slug = Post.slugify_title(value)
-        if value and not value == oldvalue and not target.slug == new_slug:
+        if value and not value == oldvalue and not old_slug == new_slug:
             target.slug = new_slug
 
     def to_json(self):

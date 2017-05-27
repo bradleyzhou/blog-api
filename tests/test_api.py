@@ -243,6 +243,32 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(json_response['url'], url)
         self.assertEqual(json_response['title'], 'The Greek in a Box with an Clock')
 
+        # title put without change keeps url unchanged
+        response = self.client.put(
+            url,
+            headers=self.get_api_headers('john@example.com', 'cat'),
+            data=json.dumps({
+                'title': 'The Greek in a Box with an Clock',
+                }))
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.data.decode('utf-8'))
+        self.assertIn(title_slug, json_response['url'])
+        self.assertNotIn(title_slug + '-1', json_response['url'])
+        self.assertNotIn(title_slug + '-2', json_response['url'])
+
+        # title change but slug unchanged keeps url unchanged
+        response = self.client.put(
+            url,
+            headers=self.get_api_headers('john@example.com', 'cat'),
+            data=json.dumps({
+                'title': 'the GrEEk in boX with clock a',
+                }))
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.data.decode('utf-8'))
+        self.assertIn(title_slug, json_response['url'])
+        self.assertNotIn(title_slug + '-1', json_response['url'])
+        self.assertNotIn(title_slug + '-2', json_response['url'])
+
         # title change result in url change
         response = self.client.put(
             url,

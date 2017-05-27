@@ -40,3 +40,56 @@ class UserModelTestCase(unittest.TestCase):
         p = Post.from_json(json_post)
         self.assertEqual(p.title, 'Title Json')
         self.assertEqual(p.body, 'Body from *Json*.')
+
+    def test_slug(self):
+        json_post = {
+            'title': 'Title a an Json',
+            'body': 'Body from *Json*.',
+        }
+        p = Post.from_json(json_post)
+        self.assertEqual(p.slug, 'title-json')
+
+    def test_slug_collision(self):
+        json_post = {
+            'title': 'Title Json',
+            'body': 'Body from *Json*.',
+        }
+        p = Post.from_json(json_post)
+        db.session.add(p)
+        db.session.commit()
+
+        json_post_2 = {
+            'title': 'Title Json',
+            'body': 'Body 2 from *Json*.',
+        }
+        p2 = Post.from_json(json_post_2)
+        db.session.add(p2)
+        db.session.commit()
+
+        self.assertEqual(p.slug, 'title-json')
+        self.assertEqual(p2.slug, 'title-json-2')
+
+    def test_slug_title_change(self):
+        json_post = {
+            'title': 'Title Json',
+            'body': 'Body from *Json*.',
+        }
+        p = Post.from_json(json_post)
+        db.session.add(p)
+        db.session.commit()
+        self.assertEqual(p.slug, 'title-json')
+
+        p.title = 'Title Json'
+        db.session.add(p)
+        db.session.commit()
+        self.assertEqual(p.slug, 'title-json')
+
+        p.title = 'New Title'
+        db.session.add(p)
+        db.session.commit()
+        self.assertEqual(p.slug, 'new-title')
+
+        p.title = 'Title Json'
+        db.session.add(p)
+        db.session.commit()
+        self.assertEqual(p.slug, 'title-json')
