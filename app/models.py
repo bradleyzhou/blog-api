@@ -1,6 +1,4 @@
-import bleach
 from datetime import datetime
-from markdown import markdown
 from slugify import slugify
 from flask import url_for
 from flask import current_app
@@ -152,7 +150,7 @@ class Post(db.Model):
     title = db.Column(db.Text)
     slug = db.Column(db.Text, index=True, unique=True)
     body = db.Column(db.Text)
-    body_html = db.Column(db.Text)
+    # body_html = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
@@ -192,17 +190,9 @@ class Post(db.Model):
 
     @staticmethod
     def title_to_slug(target, value, oldvalue, initiator):
-        if value and not value == oldvalue:
-            target.slug = Post.slugify_title(value)
-
-    @staticmethod
-    def body_to_html(target, value, oldvalue, initiator):
-        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
-                        'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
-                        'h1', 'h2', 'h3', 'p']
-        target.body_html = bleach.linkify(bleach.clean(
-            markdown(value, output_format='html'),
-            tags=allowed_tags, strip=True))
+        new_slug = Post.slugify_title(value)
+        if value and not value == oldvalue and not target.slug == new_slug:
+            target.slug = new_slug
 
     def to_json(self):
         json_post = {
@@ -226,5 +216,4 @@ class Post(db.Model):
         return Post(title=title, body=body)
 
 
-db.event.listen(Post.body, 'set', Post.body_to_html)
 db.event.listen(Post.title, 'set', Post.title_to_slug)
