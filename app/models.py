@@ -150,7 +150,6 @@ class Post(db.Model):
     title = db.Column(db.Text)
     slug = db.Column(db.Text, index=True, unique=True)
     body = db.Column(db.Text)
-    # body_html = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
@@ -199,7 +198,6 @@ class Post(db.Model):
             'url': url_for('api.get_post', slug=self.slug, _external=True),
             'title': self.title,
             'body': self.body,
-            'body_html': self.body_html,
             'timestamp': self.timestamp,
             'author': url_for('api.get_user', username=self.author.username, _external=True),
         }
