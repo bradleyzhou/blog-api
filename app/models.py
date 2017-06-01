@@ -152,7 +152,7 @@ class Post(db.Model):
     title = db.Column(db.Text)
     slug = db.Column(db.Text, index=True, unique=True)
     body = db.Column(db.Text)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     @staticmethod
@@ -167,7 +167,7 @@ class Post(db.Model):
             u = User.query.offset(randint(0, user_count-1)).first()
             p = Post(title=forgery_py.lorem_ipsum.title(),
                      body=forgery_py.lorem_ipsum.paragraphs(),
-                     timestamp=forgery_py.date.date(True),
+                     created_at=forgery_py.date.date(True),
                      author=u,
                      )
             db.session.add(p)
@@ -203,7 +203,7 @@ class Post(db.Model):
             'url': url_for('api.get_post', slug=self.slug, _external=True),
             'title': self.title,
             'body': self.body,
-            'timestamp': self.timestamp,
+            'created_at': self.created_at,
             'author': url_for('api.get_user', username=self.author.username, _external=True),
         }
         return json_post

@@ -29,7 +29,7 @@ class UserModelTestCase(unittest.TestCase):
         p = Post.query.first()
         self.assertIsNotNone(p.title)
         self.assertIsNotNone(p.body)
-        self.assertIsNotNone(p.timestamp)
+        self.assertIsNotNone(p.created_at)
         self.assertEqual(p.author, u)
 
     def test_from_json(self):

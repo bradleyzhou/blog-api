@@ -33,7 +33,7 @@ def get_user_posts(username):
     if user is None:
         raise NotFoundError('user not found')
     page = request.args.get('page', 1, type=int)
-    pagination = user.posts.order_by(Post.timestamp.desc()).paginate(
+    pagination = user.posts.order_by(Post.created_at.desc()).paginate(
         page, per_page=current_app.config['POSTS_PER_PAGE'],
         error_out=False)
     posts = pagination.items
