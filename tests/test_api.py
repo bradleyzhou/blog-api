@@ -75,23 +75,23 @@ class APITestCase(unittest.TestCase):
             url_for('api.get_posts'),
             headers=self.get_api_headers('john@example.com', 'dog')
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 403)
         json_response = json.loads(response.data.decode('utf-8'))
-        self.assertTrue(json_response['error'] == 'unauthorized')
+        self.assertEqual(json_response['error'], 'forbidden')
 
         # bad username
         response = self.client.get(
             url_for('api.get_posts'),
             headers=self.get_api_headers('baduser', 'dog')
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 403)
 
         # bad email
         response = self.client.get(
             url_for('api.get_posts'),
             headers=self.get_api_headers('baduser@example.com', 'dog')
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 403)
 
     def test_token_auth(self):
         r = Role.query.filter_by(name='User').first()
@@ -106,21 +106,21 @@ class APITestCase(unittest.TestCase):
             url_for('api.get_token'),
             headers=self.get_api_headers('bad-token', '')
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 403)
 
         # get a token by an anonymous user
         response = self.client.get(
             url_for('api.get_token'),
             headers=self.get_api_headers('', '')
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 403)
 
         # get a token by a bad user
         response = self.client.get(
             url_for('api.get_token'),
             headers=self.get_api_headers('baduser', 'cat')
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 403)
 
         # get a token
         response = self.client.get(
@@ -557,7 +557,7 @@ class APITestCase(unittest.TestCase):
             url_for('api.get_posts'),
             headers=self.get_api_headers('john@example.com', 'cat'),
             )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 403)
 
     def test_post_pagination(self):
         n_per_page = self.app.config['POSTS_PER_PAGE']
