@@ -4,13 +4,20 @@ Source code of the website blog.bradleyzhou.com REST-ful APIs
 
 ## Run the dev server
 ```
-FLASK_APP=manage.py flask run
+# prepare the setup
+export FLASK_APP=manage.py
+export ADMIN_NAME=admin
+export ADMIN_EMAIL=admin@example.com
+export ADMIN_KEY=password
 
 # if need a quick test database, init a sqlite db first:
-FLASK_APP=manage.py flask db init
-FLASK_APP=manage.py flask db migrate
-FLASK_APP=manage.py flask db upgrade
-ADMIN_NAME=admin ADMIN_EMAIL=admin@example.com ADMIN_KEY=password FLASK_APP=manage.py flask add_admin
+flask db init
+flask db migrate
+flask db upgrade
+flask deploy
+
+# start the dev server
+flask run
 ```
 
 ## Build and deploy using Docker
@@ -22,13 +29,13 @@ cd blog-api
 docker build -t blogapi .
 ```
 
-### Run Docker image (example)
+### Run Docker image for production (example)
 ```
 docker run -v /tmp/app.sock:/app/app.sock blogapi
 ```
 
 ### Run with other Docker images
-This Docker image is designed to work with  Nginx setup by unix socket file. The Nginx could be installed and configured, or spun-up by a Docker image.
+This Docker image is designed to work with Nginx setup by unix socket file. The Nginx could be installed and configured, or spun-up by a Docker image.
 
 For an exmaple, see the [blog-deploy repo](https://github.com/bradleyzhou/blog-deploy)
 

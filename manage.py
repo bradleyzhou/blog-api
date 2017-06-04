@@ -2,11 +2,13 @@ import os
 
 from flask_migrate import Migrate
 from flask_migrate import MigrateCommand
+from flask_migrate import upgrade
 
 from app import db
 from app import create_app
 from app.models import Role
 from app.models import User
+from app.models import Post
 
 COV = None
 if os.environ.get('FLASK_COVERAGE'):
@@ -19,7 +21,6 @@ migrate = Migrate(app, db)
 app.cli.add_command(MigrateCommand, name='db')
 
 
-@app.cli.command()
 def add_admin():
     """Add a new app administrator from $ADMIN_NAME $ADMIN_EMAIL $ADMIN_KEY"""
     username = app.config['ADMIN_NAME']
@@ -55,3 +56,23 @@ def test(coverage=False):
         COV.html_report(directory=covdir)
         print('HTML version: file://%s/index.html' % covdir)
         COV.erase()
+
+
+@app.cli.command()
+def deploy():
+    """Run deployment tasks."""
+    # migrate database to latest revision
+    upgrade()
+
+    # create admin user from environmental variables
+    add_admin()
+
+
+@app.cli.command()
+def fake():
+    """Generate some fake data for dev and test."""
+    if app.config['CONFIG_NAME'] not in ['development', 'testing']:
+        raise ValueError('Cannot generate fake data in "{}" environment'
+                         .format(app.config['CONFIG_NAME']))
+    User.generate_fake(1)
+    Post.generate_fake(25)

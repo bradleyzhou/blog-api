@@ -4,6 +4,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
+    CONFIG_NAME = ''
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
     ADMIN_NAME = os.environ.get('ADMIN_NAME')
     ADMIN_KEY = os.environ.get('ADMIN_KEY')
@@ -14,18 +15,20 @@ class Config:
     SQLALCHEMY_RECORD_QUERIES = True
     POSTS_PER_PAGE = 10
 
-    @staticmethod
-    def init_app(app):
+    @classmethod
+    def init_app(cls, app):
         pass
 
 
 class DevelopmentConfig(Config):
+    CONFIG_NAME = 'development'
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
 
 
 class TestingConfig(Config):
+    CONFIG_NAME = 'testing'
     TESTING = True
     DEBUG = True
     ADMIN_EMAIL = ''
@@ -33,9 +36,37 @@ class TestingConfig(Config):
         'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
 
 
+class ProductionConfig(Config):
+    CONFIG_NAME = 'production'
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+        'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+
+    @classmethod
+    def init_app(cls, app):
+        super(ProductionConfig, cls).init_app(app)
+
+
+class UnixConfig(ProductionConfig):
+    CONFIG_NAME = 'unix'
+
+    @classmethod
+    def init_app(cls, app):
+        super(UnixConfig, cls).init_app(app)
+
+        # log to syslog
+        import logging
+        from logging.handlers import SysLogHandler
+        syslog_handler = SysLogHandler()
+        syslog_handler.setLevel(logging.WARNING)
+        app.logger.addHandler(syslog_handler)
+
+
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
+    'production': ProductionConfig,
+    'unix': UnixConfig,
 
     'default': DevelopmentConfig,
 }
