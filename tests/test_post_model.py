@@ -30,6 +30,7 @@ class UserModelTestCase(unittest.TestCase):
         self.assertIsNotNone(p.title)
         self.assertIsNotNone(p.body)
         self.assertIsNotNone(p.created_at)
+        self.assertIsNotNone(p.updated_at)
         self.assertEqual(p.author, u)
 
     def test_from_json(self):

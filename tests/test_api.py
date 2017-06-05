@@ -1,5 +1,7 @@
 import unittest
 import json
+import time
+from datetime import datetime
 from base64 import b64encode
 from flask import url_for
 
@@ -20,6 +22,7 @@ class APITestCase(unittest.TestCase):
         db.create_all()
         Role.insert_roles()
         self.client = self.app.test_client()
+        self.datetime_format = '%a, %d %b %Y %H:%M:%S %Z'
 
     def tearDown(self):
         db.session.remove()
@@ -155,7 +158,7 @@ class APITestCase(unittest.TestCase):
         db.session.add(u)
         db.session.commit()
 
-        # get the new post
+        # get a non-existant post
         response = self.client.get(
             url_for('api.get_post', slug='xki9s9999'),
             headers=self.get_api_headers('john@example.com', 'cat'))
@@ -191,6 +194,10 @@ class APITestCase(unittest.TestCase):
         json_response = json.loads(response.data.decode('utf-8'))
         self.assertEqual(json_response['url'], url)
         self.assertEqual(json_response['body'], 'body of the *blog* post')
+        self.assertIsNotNone(json_response['created_at'])
+        self.assertIsNotNone(json_response['updated_at'])
+        created_at = json_response['created_at']
+        updated_at = json_response['updated_at']
         json_post = json_response
 
         # get the post from the user
@@ -204,6 +211,7 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(json_response['posts'][0], json_post)
 
         # edit post
+        time.sleep(1)
         response = self.client.put(
             url,
             headers=self.get_api_headers('john@example.com', 'cat'),
@@ -216,6 +224,11 @@ class APITestCase(unittest.TestCase):
         self.assertNotEqual(json_response['url'], url)  # title changed
         self.assertEqual(json_response['title'], 'Changed Title')
         self.assertEqual(json_response['body'], 'updated body')
+        self.assertEqual(json_response['created_at'], created_at)
+        self.assertGreater(datetime.strptime(json_response['updated_at'],
+                           self.datetime_format),
+                           datetime.strptime(updated_at,
+                           self.datetime_format))
 
         # title slug is in url
         response = self.client.post(

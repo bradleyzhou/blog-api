@@ -69,4 +69,5 @@ def edit_post(slug):
     post.title = request.json.get('title', post.title)
     post.body = request.json.get('body', post.body)
     db.session.add(post)
+    db.session.commit()
     return jsonify(post.to_json())

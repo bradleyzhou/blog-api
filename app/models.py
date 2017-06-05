@@ -153,6 +153,10 @@ class Post(db.Model):
     slug = db.Column(db.Text, index=True, unique=True)
     body = db.Column(db.Text)
     created_at = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime,
+                           default=datetime.utcnow,
+                           onupdate=datetime.utcnow,
+                           )
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     @staticmethod
@@ -204,6 +208,7 @@ class Post(db.Model):
             'title': self.title,
             'body': self.body,
             'created_at': self.created_at,
+            'updated_at': self.updated_at,
             'author': url_for('api.get_user', username=self.author.username, _external=True),
         }
         return json_post
