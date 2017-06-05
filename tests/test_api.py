@@ -37,6 +37,13 @@ class APITestCase(unittest.TestCase):
             'Content-Type': 'application/json',
         }
 
+    def create_john_cat(self):
+        r = Role.query.filter_by(name='User').first()
+        u = User(email='john@example.com', password='cat',
+                 username='john', role=r)
+        db.session.add(u)
+        db.session.commit()
+
     def test_404(self):
         response = self.client.get(
             '/wrong/url',
@@ -52,12 +59,7 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_password_auth(self):
-        r = Role.query.filter_by(name='User').first()
-        self.assertIsNotNone(r)
-        u = User(email='john@example.com', password='cat',
-                 username='john', role=r)
-        db.session.add(u)
-        db.session.commit()
+        self.create_john_cat()
 
         # email and password
         response = self.client.get(
@@ -97,12 +99,7 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_token_auth(self):
-        r = Role.query.filter_by(name='User').first()
-        self.assertIsNotNone(r)
-        u = User(email='john@example.com', password='cat',
-                 username='john', role=r)
-        db.session.add(u)
-        db.session.commit()
+        self.create_john_cat()
 
         # bad token
         response = self.client.get(
@@ -150,13 +147,7 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_posts(self):
-        # add a user
-        r = Role.query.filter_by(name='User').first()
-        self.assertIsNotNone(r)
-        u = User(email='john@example.com', password='cat',
-                 username='john', role=r)
-        db.session.add(u)
-        db.session.commit()
+        self.create_john_cat()
 
         # get a non-existant post
         response = self.client.get(
@@ -202,7 +193,7 @@ class APITestCase(unittest.TestCase):
 
         # get the post from the user
         response = self.client.get(
-            url_for('api.get_user_posts', username=u.username),
+            url_for('api.get_user_posts', username='john'),
             headers=self.get_api_headers('john@example.com', 'cat'))
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.data.decode('utf-8'))
